@@ -177,17 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .catch(error => console.error('Error:', error));
     </script>
 </body>
-</html><?php
-function getOS($userAgent) {
-    $os = "Unknown";
-    if (preg_match('/Windows/i', $userAgent)) $os = "Windows";
-    elseif (preg_match('/Macintosh|Mac OS/i', $userAgent)) $os = "MacOS";
-    elseif (preg_match('/Linux/i', $userAgent)) $os = "Linux";
-    elseif (preg_match('/Android/i', $userAgent)) $os = "Android";
-    elseif (preg_match('/iPhone|iPad|iPod/i', $userAgent)) $os = "iOS";
-    return $os;
-}
-
+</html>
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
