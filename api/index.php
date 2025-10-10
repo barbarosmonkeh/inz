@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $data['user_id'] ?? $_GET['user'] ?? 'Unknown';
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $os = getOS($user_agent);
-    $ip_address = $_SERVER['REMOTE_ADDR'];
+    $ip_address = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
 
     // Data for Discord
     $payload = [
