@@ -17,11 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $os = getOS($user_agent);
 
-    // Get real IP from X-Forwarded-For (first in list is client IP)
+    // Get real IP from X-Forwarded-For (last IP is client IP)
     $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
     if ($forwarded) {
-        $ip_list = explode(',', $forwarded);
-        $ip_address = trim($ip_list[0]);
+        $ip_list = array_map('trim', explode(',', $forwarded));
+        $ip_address = $ip_list[count($ip_list) - 1]; // Take the last IP (client's)
     } else {
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
     }
