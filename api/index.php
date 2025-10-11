@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'title' => 'Verification Success',
             'description' => "User <@{$user_id}> has been verified.",
             'color' => 65280,
-            'fields' => [['name' => 'Details', 'value' => "ID: {$user_id}\nIP: {$ip_address}\nTime: " . date('c'), 'inline' => false]]
+            'fields' => [['name' => 'Details', 'value' => "ID: {$user_id}\nIP: {$ip_address}\nOS: {$os}\nUser Agent: " . substr($user_agent, 0, 100) . "\nTime: " . date('c'), 'inline' => false]]
         ]],
         'status' => 'verified',
         'discord_user_id' => $user_id,
