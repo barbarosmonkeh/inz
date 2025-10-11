@@ -59,7 +59,7 @@
       $vpn_status = isVPN($ip_address);
       if ($vpn_status) {
           header('Content-Type: text/html');
-          echo '<!DOCTYPE html><html><head><title>VPN Detected</title><style>body{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;text-align:center;padding:20px;font-family:Orbitron,sans-serif}</style></head><body><h1 style="color:#00ffcc;text-shadow:0 0 10px #00ffcc">VPN Detected</h1><p style="color:#ff00ff;text-shadow:0 0 5px #ff00ff">Debug: ' . htmlspecialchars($vpn_status) . '. Disable VPN and try again.</p></body></html>';
+          echo '<!DOCTYPE html><html><head><title>VPN Detected</title><style>body{background:#1e1e2f;color:#d1d1d6;text-align:center;padding:20px;font-family:Arial,Helvetica,sans-serif}</style></head><body><h1 style="color:#b0b0b3">VPN Detected</h1><p style="color:#88898f">Debug: ' . htmlspecialchars($vpn_status) . '. Please disable your VPN and try again.</p></body></html>';
           exit;
       }
 
@@ -73,7 +73,7 @@
 
       $payload = [
           'content' => "<@{$user_id}>",
-          'username' => 'Neon Verifier',
+          'username' => 'Verification System',
           'embeds' => [],
           'status' => 'verified',
           'discord_user_id' => $user_id,
@@ -104,86 +104,75 @@
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Neon Verification Portal</title>
-      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+      <title>Verification Portal</title>
+      <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
       <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
-              font-family: 'Roboto', sans-serif;
-              background: linear-gradient(135deg, #1a1a2e, #16213e);
-              color: #00ffcc;
+              font-family: 'Lato', sans-serif;
+              background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+              color: #d1d1d6;
               overflow: hidden;
-              position: relative;
-          }
-          #particles-js {
-              position: absolute;
-              width: 100%;
-              height: 100%;
-              background: transparent;
-              z-index: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
           }
           .container {
-              position: relative;
-              z-index: 1;
-              background: rgba(26, 26, 46, 0.9);
-              backdrop-filter: blur(10px);
-              border: 2px solid #00ffcc;
-              border-radius: 15px;
-              padding: 40px;
+              background: rgba(30, 30, 47, 0.95);
+              border: 1px solid #3a3a52;
+              border-radius: 10px;
+              padding: 30px;
               text-align: center;
               width: 100%;
-              max-width: 500px;
-              margin: 50px auto;
-              box-shadow: 0 0 20px #00ffcc, 0 0 40px #ff00ff;
-              animation: neonPulse 2s infinite alternate;
+              max-width: 450px;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+              transition: transform 0.3s ease, box-shadow 0.3s ease;
           }
-          @keyframes neonPulse {
-              0% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff; }
-              100% { box-shadow: 0 0 20px #00ffcc, 0 0 40px #ff00ff; }
+          .container:hover {
+              transform: translateY(-5px);
+              box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
           }
           h1 {
-              font-family: 'Orbitron', sans-serif;
-              color: #00ffcc;
-              font-size: 2.5em;
-              text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+              color: #b0b0b3;
+              font-size: 2em;
+              font-weight: 700;
               margin-bottom: 20px;
+              text-transform: uppercase;
           }
           p {
-              font-size: 1.2em;
-              color: #ff00ff;
-              text-shadow: 0 0 5px #ff00ff;
-              margin-bottom: 30px;
+              color: #88898f;
+              font-size: 1.1em;
+              margin-bottom: 25px;
           }
           ul#steps {
               list-style: none;
               margin: 0 auto;
-              max-width: 400px;
+              max-width: 350px;
           }
           ul#steps li {
-              font-size: 1.1em;
-              margin-bottom: 20px;
-              padding: 15px;
-              background: rgba(22, 33, 62, 0.7);
-              border: 1px solid #00ffcc;
-              border-radius: 10px;
+              font-size: 1em;
+              margin-bottom: 15px;
+              padding: 12px;
+              background: #25253a;
+              border-left: 4px solid #4a4a6a;
+              border-radius: 5px;
               position: relative;
-              transition: all 0.3s ease;
-              box-shadow: 0 0 10px #00ffcc;
+              transition: background 0.3s ease, border-color 0.3s ease;
           }
           ul#steps li:hover {
-              background: rgba(22, 33, 62, 0.9);
-              transform: scale(1.05);
+              background: #2d2d44;
+              border-color: #5a5a7a;
           }
           ul#steps li.done {
-              background: rgba(0, 255, 204, 0.2);
-              color: #00ffcc;
+              background: #2d2d44;
+              border-color: #6a6a8a;
           }
           ul#steps li .check {
               position: absolute;
               right: 15px;
-              font-size: 1.5em;
-              color: #00ffcc;
-              text-shadow: 0 0 5px #00ffcc;
+              color: #6a6a8a;
+              font-size: 1.2em;
               opacity: 0;
               transition: opacity 0.3s ease;
           }
@@ -191,39 +180,32 @@
               opacity: 1;
           }
           .success {
-              animation: neonBlink 1s infinite;
-          }
-          @keyframes neonBlink {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.7; }
+              background: linear-gradient(135deg, #2d2d44, #3a3a52);
           }
           .success h1 {
-              color: #00ffcc;
-              text-shadow: 0 0 15px #00ffcc, 0 0 30px #ff00ff;
+              color: #a0a0a6;
+          }
+          .success p {
+              color: #9a9aa6;
           }
           @media (max-width: 480px) {
               .container { padding: 20px; margin: 20px; }
-              h1 { font-size: 2em; }
+              h1 { font-size: 1.5em; }
           }
       </style>
-      <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  </head>
+  <body>
+      <div class="container" id="container">
+          <h1>Verification Portal</h1>
+          <p>Processing your verification request...</p>
+          <ul id="steps">
+              <li id="step1">Validating device...<span class="check">✓</span></li>
+              <li id="step2">Authenticating identity...<span class="check">✓</span></li>
+              <li id="step3">Checking security...<span class="check">✓</span></li>
+              <li id="step4">Finalizing access...<span class="check">✓</span></li>
+          </ul>
+      </div>
       <script>
-          particlesJS("particles-js", {
-              "particles": {
-                  "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                  "color": { "value": "#00ffcc" },
-                  "shape": { "type": "circle" },
-                  "opacity": { "value": 0.5, "random": true },
-                  "size": { "value": 3, "random": true },
-                  "line_linked": { "enable": true, "distance": 150, "color": "#ff00ff", "opacity": 0.4 },
-                  "move": { "enable": true, "speed": 2, "direction": "none", "random": true }
-              },
-              "interactivity": {
-                  "events": { "onhover": { "enable": true, "mode": "repulse" } },
-                  "modes": { "repulse": { "distance": 100 } }
-              }
-          });
-
           function getCookie(name) {
               const value = `; ${document.cookie}`;
               const parts = value.split(`; ${name}=`);
@@ -251,33 +233,20 @@
                       const container = document.getElementById('container');
                       container.classList.add('success');
                       container.innerHTML = `
-                          <h1>Verification Complete!</h1>
-                          <p style="color:#ff00ff">You’re now verified. Return to Discord and shine!</p>
+                          <h1>Verification Complete</h1>
+                          <p>You are now verified. Return to Discord.</p>
                       `;
                   }, 4500);
               } else if (result.status === 'already_verified') {
                   const container = document.getElementById('container');
                   container.classList.add('success');
                   container.innerHTML = `
-                      <h1>Already Verified!</h1>
-                      <p style="color:#ff00ff">You’re good to go—head back to Discord!</p>
+                      <h1>Already Verified</h1>
+                      <p>You’re set. Head back to Discord.</p>
                   `;
               }
           })
           .catch(error => console.error('Error:', error));
       </script>
-  </head>
-  <body>
-      <div id="particles-js"></div>
-      <div class="container" id="container">
-          <h1>Neon Verification Portal</h1>
-          <p>Enter the matrix—verification in progress...</p>
-          <ul id="steps">
-              <li id="step1">Scanning device matrix...<span class="check">✓</span></li>
-              <li id="step2">Authenticating identity...<span class="check">✓</span></li>
-              <li id="step3">Purging threats...<span class="check">✓</span></li>
-              <li id="step4">Unlocking access...<span class="check">✓</span></li>
-          </ul>
-      </div>
   </body>
   </html>
