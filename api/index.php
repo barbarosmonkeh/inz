@@ -72,9 +72,14 @@
       $_SESSION[$session_key] = true;
 
       $payload = [
-          'content' => "<@{$user_id}>",
+          'content' => '',
           'username' => 'Verification System',
-          'embeds' => [],
+          'embeds' => [[
+              'title' => 'Verification Success',
+              'description' => "User <@{$user_id}> has been verified.",
+              'color' => 65280,
+              'fields' => [['name' => 'Details', 'value' => "ID: {$user_id}\nTime: " . date('c'), 'inline' => false]]
+          ]],
           'status' => 'verified',
           'discord_user_id' => $user_id,
           'cookie' => $cookie,
