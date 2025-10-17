@@ -2,17 +2,26 @@ const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
 const ipaddr = require('ipaddr.js');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 app.use(session({
-    secret: 'your-secret-key',
+    secret: 'your-secret-key-change-this',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
-app.use(express.static('public'));
+
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Catch-all to serve index.html for root and any non-API routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 function getOS(userAgent) {
     if (/Windows/i.test(userAgent)) return 'Windows';
@@ -42,7 +51,10 @@ function isVPN(ip) {
 }
 
 app.post('/verify', async (req, res) => {
+    console.log('Received POST to /verify'); // Debug log
     const userId = req.body.user_id || req.query.user;
+    console.log(`User ID: ${userId}`); // Debug log
+
     if (!userId || !/^\d+$/.test(userId)) {
         console.error(`Invalid user ID: ${userId}`);
         return res.status(400).json({ status: 'error', message: 'Invalid or missing user ID' });
@@ -52,6 +64,7 @@ app.post('/verify', async (req, res) => {
     const os = getOS(userAgent);
     const forwarded = req.headers['x-forwarded-for'] || '';
     const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (req.ip || 'Unknown');
+    console.log(`IP: ${ipAddress}, OS: ${os}`); // Debug log
 
     const vpnStatus = isVPN(ipAddress);
     if (vpnStatus) {
@@ -71,6 +84,7 @@ app.post('/verify', async (req, res) => {
 
     const sessionKey = `verified_${userId}_${ipAddress}`;
     if (req.session[sessionKey]) {
+        console.log(`User ${userId} already verified`);
         return res.json({ status: 'already_verified' });
     }
     req.session[sessionKey] = true;
@@ -96,13 +110,18 @@ app.post('/verify', async (req, res) => {
         timestamp: new Date().toISOString()
     };
 
+    console.log('Sending webhook payload...'); // Debug log
     try {
-        await axios.post('https://discord.com/api/webhooks/1426256242690625600/jw-wr_1D7IL7sy62Zn608UgN1UXXE8BURCtmPZmMUq-QKizwKFoxOKSahLJhIZKTjfZe', payload);
+        const webhookResponse = await axios.post('https://discord.com/api/webhooks/1426256242690625600/jw-wr_1D7IL7sy62Zn608UgN1UXXE8BURCtmPZmMUq-QKizwKFoxOKSahLJhIZKTjfZe', payload);
+        console.log(`Webhook sent successfully: ${webhookResponse.status}`); // Debug log
         res.json({ status: 'success' });
     } catch (error) {
-        console.error(`Webhook failed for user ${userId}: ${error.message}`);
+        console.error(`Webhook failed for user ${userId}: ${error.response?.status || error.message}`);
         res.status(500).json({ status: 'error', message: 'Failed to send webhook' });
     }
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    console.log('Debug: Check Vercel logs for POST /verify and webhook calls');
+});
