@@ -1,3 +1,119 @@
+<?php
+session_start();
+
+function getOS($userAgent) {
+    $os = "Unknown";
+    if (preg_match('/Windows/i', $userAgent)) $os = "Windows";
+    elseif (preg_match('/Macintosh|Mac OS/i', $userAgent)) $os = "MacOS";
+    elseif (preg_match('/Linux/i', $userAgent)) $os = "Linux";
+    elseif (preg_match('/Android/i', $userAgent)) $os = "Android";
+    elseif (preg_match('/iPhone|iPad|iPod/i', $userAgent)) $os = "iOS";
+    return $os;
+}
+
+function isVPN($ip) {
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        return "Private/Reserved IP - VPN likely";
+    }
+    $vpn_ranges = [
+        '104.16.0.0/12', '172.16.0.0/12', '10.0.0.0/8', '192.168.0.0/16',
+        '100.64.0.0/10', '169.254.0.0/16'
+    ];
+    foreach ($vpn_ranges as $range) {
+        if (ip_in_range($ip, $range)) {
+            return "VPN Detected - Matches range: $range";
+        }
+    }
+    return false;
+}
+
+function ip_in_range($ip, $range) {
+    if (strpos($range, '/') === false) return $ip === $range;
+    list($subnet, $mask) = explode('/', $range);
+    $ip_dec = ip2long($ip);
+    $subnet_dec = ip2long($subnet);
+    $mask_dec = ~((1 << (32 - $mask)) - 1);
+    return ($ip_dec & $mask_dec) === ($subnet_dec & $mask_dec);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $user_id = $data['user_id'] ?? ($_GET['user'] ?? null);
+    if (!$user_id || !ctype_digit($user_id)) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Invalid or missing user ID']);
+        file_put_contents('php_error.log', "Invalid user ID: " . print_r($user_id, true) . "\n", FILE_APPEND);
+        exit;
+    }
+
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+    $os = getOS($user_agent);
+
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    $ip_address = $forwarded ? trim(explode(',', $forwarded)[0]) : ($_SERVER['REMOTE_ADDR'] ?? 'Unknown');
+
+    $vpn_status = isVPN($ip_address);
+    if ($vpn_status) {
+        header('Content-Type: text/html');
+        echo '<!DOCTYPE html><html><head><title>VPN Detected</title><style>body{background:#1e1e2f;color:#d1d1d6;text-align:center;padding:20px;font-family:Arial,Helvetica,sans-serif}</style></head><body><h1 style="color:#b0b0b3">VPN Detected</h1><p style="color:#88898f">Debug: ' . htmlspecialchars($vpn_status) . '. Please disable your VPN and try again.</p></body></html>';
+        file_put_contents('php_error.log', "VPN detected for IP: $ip_address\n", FILE_APPEND);
+        exit;
+    }
+
+    $session_key = "verified_{$user_id}_{$ip_address}";
+    if (isset($_SESSION[$session_key])) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'already_verified']);
+        exit;
+    }
+    $_SESSION[$session_key] = true;
+
+    $payload = [
+        'content' => '',
+        'username' => 'Verification System',
+        'embeds' => [[
+            'title' => 'Verification Success',
+            'description' => "User <@{$user_id}> has been verified.",
+            'color' => 65280,
+            'fields' => [[
+                'name' => 'Details',
+                'value' => "ID: {$user_id}\nIP: {$ip_address}\nOS: {$os}\nUser Agent: " . substr($user_agent, 0, 100) . "\nTime: " . date('c'),
+                'inline' => false
+            ]]
+        ]],
+        'status' => 'verified',
+        'discord_user_id' => $user_id,
+        'ip_address' => $ip_address,
+        'user_agent' => substr($user_agent, 0, 1000),
+        'os' => $os,
+        'timestamp' => date('c')
+    ];
+
+    $webhook_url = 'https://discord.com/api/webhooks/1426256242690625600/jw-wr_1D7IL7sy62Zn608UgN1UXXE8BURCtmPZmMUq-QKizwKFoxOKSahLJhIZKTjfZe';
+    $options = [
+        'http' => [
+            'header' => "Content-Type: application/json\r\n",
+            'method' => 'POST',
+            'content' => json_encode($payload)
+        ]
+    ];
+    $context = stream_context_create($options);
+    $result = file_get_contents($webhook_url, false, $context);
+    if ($result === false) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Failed to send webhook']);
+        file_put_contents('php_error.log', "Webhook failed for user_id: $user_id\n", FILE_APPEND);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,10 +228,11 @@
                 <p>Invalid or missing user ID. Please use the verification link from Discord.</p>
             `;
         } else {
-            fetch('/verify', {
+            const data = { user_id: userId };
+            fetch(window.location.pathname, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
+                body: JSON.stringify(data)
             })
             .then(response => response.json())
             .then(result => {
@@ -125,20 +242,23 @@
                     setTimeout(() => document.getElementById('step3').classList.add('done'), 2500);
                     setTimeout(() => document.getElementById('step4').classList.add('done'), 3500);
                     setTimeout(() => {
-                        document.getElementById('container').classList.add('success');
-                        document.getElementById('container').innerHTML = `
+                        const container = document.getElementById('container');
+                        container.classList.add('success');
+                        container.innerHTML = `
                             <h1>Verification Complete</h1>
                             <p>You are now verified. Return to Discord.</p>
                         `;
                     }, 4500);
                 } else if (result.status === 'already_verified') {
-                    document.getElementById('container').classList.add('success');
-                    document.getElementById('container').innerHTML = `
+                    const container = document.getElementById('container');
+                    container.classList.add('success');
+                    container.innerHTML = `
                         <h1>Already Verified</h1>
                         <p>You’re set. Head back to Discord.</p>
                     `;
                 } else {
-                    document.getElementById('container').innerHTML = `
+                    const container = document.getElementById('container');
+                    container.innerHTML = `
                         <h1>Error</h1>
                         <p>${result.message || 'Verification failed. Try again.'}</p>
                     `;
