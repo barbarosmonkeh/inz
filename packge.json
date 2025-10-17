@@ -1,0 +1,14 @@
+{
+    "name": "verification-portal",
+    "version": "1.0.0",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "express-session": "^1.17.2",
+        "axios": "^1.4.0",
+        "ipaddr.js": "^2.0.1"
+    }
+}
